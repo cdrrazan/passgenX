@@ -1,0 +1,160 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'io/console'
+require 'optparse'
+require 'colorize'
+
+require_relative '../lib/passgenx'
+require_relative '../lib/passgenx/vault'
+
+# ------------------------------------------------------------------------------
+# PassgenX CLI
+# ------------------------------------------------------------------------------
+# A deterministic password generator built with Ruby 3.x
+# This CLI offers both interactive and scripted modes for generating strong,
+# reproducible passwords based on a domain, master password, and identifier.
+# ------------------------------------------------------------------------------
+
+# Default user configuration
+options = {
+  length: nil,
+  case_type: nil,
+  include_symbols: nil,
+  include_digits: nil,
+  copy: false
+}
+
+# ------------------------------------------------------------------------------
+# CLI Argument Parsing
+# ------------------------------------------------------------------------------
+
+OptionParser.new do |opts|
+  opts.banner = '🔐 Usage: passgenx [options]'.light_blue.bold
+  
+  opts.on('--length LENGTH', Integer, 'Password length (default: 16)') do |v|
+    options[:length] = v
+  end
+  
+  opts.on('--case TYPE', String, 'Character case: lower, upper, both (default: both)') do |v|
+    options[:case_type] = v
+  end
+  
+  opts.on('--symbols', 'Include symbols') { options[:include_symbols] = true }
+  opts.on('--no-symbols', 'Exclude symbols') { options[:include_symbols] = false }
+  
+  opts.on('--digits', 'Include digits') { options[:include_digits] = true }
+  opts.on('--no-digits', 'Exclude digits') { options[:include_digits] = false }
+  
+  opts.on('--copy', 'Copy password to clipboard') { options[:copy] = true }
+  
+  opts.on('-h', '--help', 'Display this help message') do
+    puts opts
+    exit
+  end
+end.parse!
+
+# ------------------------------------------------------------------------------
+# Vault Setup Shortcut
+# Allows the user to pre-generate and store an identifier for a domain
+# ------------------------------------------------------------------------------
+
+if ARGV[0] == 'setup'
+  puts "\n🛠️  Setup mode".bold.cyan
+  print '🌐 Enter domain to store identifier for: '.light_blue
+  domain = $stdin.gets.strip
+  
+  vault = Passgenx::Vault.new
+  id = vault.generate_and_store(domain)
+  
+  puts "✅ Identifier generated and stored: #{id}".green
+  exit
+end
+
+# ------------------------------------------------------------------------------
+# Main CLI Prompt Flow
+# ------------------------------------------------------------------------------
+
+puts "\n#{'=' * 50}"
+puts '🔐 PassgenX - Deterministic Password Generator'.bold.cyan
+puts "#{'=' * 50}\n"
+
+# Required Inputs
+print '🌐  Domain: '.light_blue
+domain = $stdin.gets.strip
+
+print '🔑  Master password: '.light_blue
+master_password = $stdin.noecho(&:gets).strip
+puts
+
+print '🆔  Identifier (optional, press Enter to use vault/default): '.light_blue
+identifier = $stdin.gets.strip
+
+vault = Passgenx::Vault.new
+identifier = vault.get_identifier(domain) if identifier.empty?
+identifier ||= 'default'
+
+# Interactive Configuration (when not supplied via CLI)
+puts "\n⚙️  Configuration".bold
+
+unless options[:length]
+  print '📏  Password length (default 16): '.light_blue
+  input = $stdin.gets.strip
+  options[:length] = input.empty? ? 16 : input.to_i.clamp(8, 64)
+end
+
+unless options[:case_type]
+  print '🔠  Case type? (lower / upper / both) [both]: '.light_blue
+  input = $stdin.gets.strip.downcase
+  options[:case_type] = %w[lower upper both].include?(input) ? input : 'both'
+end
+
+if options[:include_symbols].nil?
+  print '🔣  Include symbols? (y/n) [y]: '.light_blue
+  input = $stdin.gets.strip.downcase
+  options[:include_symbols] = input.empty? || input == 'y'
+end
+
+if options[:include_digits].nil?
+  print '🔢  Include digits? (y/n) [y]: '.light_blue
+  input = $stdin.gets.strip.downcase
+  options[:include_digits] = input.empty? || input == 'y'
+end
+
+# ------------------------------------------------------------------------------
+# Password Generation
+# ------------------------------------------------------------------------------
+
+puts "\n🔄 Generating password with length: #{options[:length]}".yellow
+
+generator = Passgenx::Generator.new(
+  domain: domain,
+  master_password: master_password,
+  identifier: identifier
+)
+
+password = generator.generate(
+  length: options[:length],
+  case_type: options[:case_type],
+  include_symbols: options[:include_symbols],
+  include_digits: options[:include_digits]
+)
+
+# ------------------------------------------------------------------------------
+# Output Handling
+# ------------------------------------------------------------------------------
+
+puts "\n#{'-' * 50}"
+
+if options[:copy]
+  begin
+    IO.popen('pbcopy', 'w') { |f| f << password }
+    puts '📋  Password copied to clipboard!'.green.bold
+  rescue StandardError
+    puts '⚠️  Could not copy to clipboard. Is pbcopy available?'.red
+  end
+end
+
+puts '✅  Your generated password: '.green + password.bold
+
+puts "#{'-' * 50}\n"
