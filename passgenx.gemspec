@@ -16,7 +16,7 @@ Gem::Specification.new do |spec|
   spec.homepage      = 'https://github.com/cdrrazan/passgenX'
   spec.license       = 'MIT'
 
-  spec.files         = Dir['lib/**/*.rb'] + ['bin/passgenx', 'README.md', 'LICENSE.txt']
+  spec.files         = Dir['lib/**/*.rb'] + ['bin/passgenx', 'README.md', 'LICENSE']
   spec.executables   = ['passgenx']
   spec.bindir        = 'bin'
   spec.require_paths = ['lib']

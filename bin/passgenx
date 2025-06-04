@@ -75,17 +75,42 @@ end
 # Main CLI Prompt Flow
 # ------------------------------------------------------------------------------
 
-puts "\n#{'=' * 50}"
-puts '🔐 PassgenX - Deterministic Password Generator'.bold.cyan
-puts "#{'=' * 50}\n"
+puts <<~BANNER.cyan.bold
 
-# Required Inputs
-print '🌐  Domain: '.light_blue
-domain = $stdin.gets.strip
+          .-------------------------------------------------------------------.
+          |██████╗  █████╗ ███████╗███████╗ ██████╗ ███████╗███╗   ██╗██╗  ██╗|
+          |██╔══██╗██╔══██╗██╔════╝██╔════╝██╔════╝ ██╔════╝████╗  ██║╚██╗██╔╝|
+          |██████╔╝███████║███████╗███████╗██║  ███╗█████╗  ██╔██╗ ██║ ╚███╔╝ |
+          |██╔═══╝ ██╔══██║╚════██║╚════██║██║   ██║██╔══╝  ██║╚██╗██║ ██╔██╗ |
+          |██║     ██║  ██║███████║███████║╚██████╔╝███████╗██║ ╚████║██╔╝ ██╗|
+          |╚═╝     ╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝╚═╝  ╚═╝|
+          '-------------------------------------------------------------------'
 
-print '🔑  Master password: '.light_blue
-master_password = $stdin.noecho(&:gets).strip
-puts
+                   🔐 Deterministic Password Generator for Rubyists
+
+BANNER
+
+# Helper method to ensure non-empty user input
+def prompt_required(label)
+  loop do
+    print label
+    input = $stdin.gets.strip
+    return input unless input.empty?
+    puts "❗ This field is required.".red
+  end
+end
+
+# Required Inputs (with validation)
+domain = prompt_required('🌐  Domain: '.light_blue)
+
+master_password = ''
+loop do
+  print '🔑  Master password: '.light_blue
+  master_password = $stdin.noecho(&:gets).strip
+  puts
+  break unless master_password.empty?
+  puts "❗ Master password cannot be blank.".red
+end
 
 print '🆔  Identifier (optional, press Enter to use vault/default): '.light_blue
 identifier = $stdin.gets.strip
