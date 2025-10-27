@@ -1,6 +1,11 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# PassgenX CLI
+# A deterministic password generator built with Ruby 3.x
+# This CLI offers both interactive and scripted modes for generating strong,
+# reproducible passwords based on a domain, master password, and identifier.
+
 require 'io/console'
 require 'optparse'
 require 'colorize'
@@ -8,15 +13,7 @@ require 'colorize'
 require_relative '../lib/passgenx'
 require_relative '../lib/passgenx/vault'
 
-# ------------------------------------------------------------------------------
-# PassgenX CLI
-# ------------------------------------------------------------------------------
-# A deterministic password generator built with Ruby 3.x
-# This CLI offers both interactive and scripted modes for generating strong,
-# reproducible passwords based on a domain, master password, and identifier.
-# ------------------------------------------------------------------------------
-
-# Default user configuration
+# Default configuration hash for CLI options
 options = {
   length: nil,
   case_type: nil,
@@ -25,56 +22,46 @@ options = {
   copy: false
 }
 
-# ------------------------------------------------------------------------------
-# CLI Argument Parsing
-# ------------------------------------------------------------------------------
-
+# Parse command-line arguments
 OptionParser.new do |opts|
   opts.banner = '🔐 Usage: passgenx [options]'.light_blue.bold
-  
+
   opts.on('--length LENGTH', Integer, 'Password length (default: 16)') do |v|
     options[:length] = v
   end
-  
+
   opts.on('--case TYPE', String, 'Character case: lower, upper, both (default: both)') do |v|
     options[:case_type] = v
   end
-  
+
   opts.on('--symbols', 'Include symbols') { options[:include_symbols] = true }
   opts.on('--no-symbols', 'Exclude symbols') { options[:include_symbols] = false }
-  
+
   opts.on('--digits', 'Include digits') { options[:include_digits] = true }
   opts.on('--no-digits', 'Exclude digits') { options[:include_digits] = false }
-  
+
   opts.on('--copy', 'Copy password to clipboard') { options[:copy] = true }
-  
+
   opts.on('-h', '--help', 'Display this help message') do
     puts opts
     exit
   end
 end.parse!
 
-# ------------------------------------------------------------------------------
-# Vault Setup Shortcut
-# Allows the user to pre-generate and store an identifier for a domain
-# ------------------------------------------------------------------------------
-
+# Vault setup mode: generate and store identifier for a domain
 if ARGV[0] == 'setup'
   puts "\n🛠️  Setup mode".bold.cyan
   print '🌐 Enter domain to store identifier for: '.light_blue
   domain = $stdin.gets.strip
-  
+
   vault = Passgenx::Vault.new
   id = vault.generate_and_store(domain)
-  
+
   puts "✅ Identifier generated and stored: #{id}".green
   exit
 end
 
-# ------------------------------------------------------------------------------
-# Main CLI Prompt Flow
-# ------------------------------------------------------------------------------
-
+# Display ASCII art banner
 puts <<~BANNER.cyan.bold
 
           .-------------------------------------------------------------------.
@@ -90,36 +77,44 @@ puts <<~BANNER.cyan.bold
 
 BANNER
 
-# Helper method to ensure non-empty user input
+# Prompt for required input with validation
+#
+# @param label [String] The prompt label to display
+# @return [String] Non-empty user input
 def prompt_required(label)
   loop do
     print label
     input = $stdin.gets.strip
     return input unless input.empty?
+
     puts "❗ This field is required.".red
   end
 end
 
-# Required Inputs (with validation)
+# Collect user input for password generation
 domain = prompt_required('🌐  Domain: '.light_blue)
 
+# Prompt for master password with masking
 master_password = ''
 loop do
   print '🔑  Master password: '.light_blue
   master_password = $stdin.noecho(&:gets).strip
   puts
   break unless master_password.empty?
+
   puts "❗ Master password cannot be blank.".red
 end
 
+# Prompt for optional identifier
 print '🆔  Identifier (optional, press Enter to use vault/default): '.light_blue
 identifier = $stdin.gets.strip
 
+# Retrieve identifier from vault if not provided
 vault = Passgenx::Vault.new
 identifier = vault.get_identifier(domain) if identifier.empty?
 identifier ||= 'default'
 
-# Interactive Configuration (when not supplied via CLI)
+# Interactive configuration for password generation options
 puts "\n⚙️  Configuration".bold
 
 unless options[:length]
@@ -146,10 +141,7 @@ if options[:include_digits].nil?
   options[:include_digits] = input.empty? || input == 'y'
 end
 
-# ------------------------------------------------------------------------------
-# Password Generation
-# ------------------------------------------------------------------------------
-
+# Generate password using PassgenX generator
 puts "\n🔄 Generating password with length: #{options[:length]}".yellow
 
 generator = Passgenx::Generator.new(
@@ -165,10 +157,7 @@ password = generator.generate(
   include_digits: options[:include_digits]
 )
 
-# ------------------------------------------------------------------------------
-# Output Handling
-# ------------------------------------------------------------------------------
-
+# Output generated password
 puts "\n#{'-' * 50}"
 
 if options[:copy]
