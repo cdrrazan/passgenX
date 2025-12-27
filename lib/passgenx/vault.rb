@@ -28,7 +28,7 @@ module Passgenx
     # vault data from disk, or initializes an empty hash if no vault exists.
     def initialize
       FileUtils.mkdir_p(File.dirname(VAULT_PATH))
-      @vault = File.exist?(VAULT_PATH) ? YAML.load_file(VAULT_PATH) : {}
+      @vault = load_vault || {}
     end
 
     # Retrieve the identifier for a given domain
@@ -71,6 +71,14 @@ module Passgenx
     end
 
     private
+
+    def load_vault
+      return unless File.exist?(VAULT_PATH)
+
+      YAML.load_file(VAULT_PATH)
+    rescue StandardError
+      nil
+    end
 
     # Persist the vault hash to disk as YAML
     #

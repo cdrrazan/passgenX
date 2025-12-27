@@ -24,6 +24,7 @@
 require_relative 'passgenx/generator'
 require_relative 'passgenx/vault'
 require_relative 'passgenx/version'
+require_relative 'passgenx/cli'
 
 module Passgenx
 end
