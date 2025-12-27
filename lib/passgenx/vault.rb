@@ -5,19 +5,18 @@ require 'fileutils'
 require 'securerandom'
 
 module Passgenx
-  # Local YAML-based vault for storing domain-specific identifiers
+  # Local YAML-based vault for storing domain-specific identifiers.
   #
-  # This class manages a local YAML-based vault for storing domain-specific
-  # identifiers. These identifiers are used as part of deterministic password
-  # generation, enabling consistent but unique passwords per domain.
+  # While PassgenX is deterministic and "stateless" at its core, users often want
+  # unique identifiers per domain (e.g., 'primary', 'recovery', 'api-key') to avoid
+  # password reuse across different accounts on the same site.
   #
-  # The vault is stored in ~/.passgenx/vault.yml
+  # This Vault provides a local-only, human-editable YAML store for those identifiers.
+  # It lives in the user's home directory (~/.passgenx/vault.yml) to ensure it's
+  # easily portable and backup-friendly.
   #
-  # @example Store and retrieve an identifier
-  #   vault = Passgenx::Vault.new
-  #   vault.store_identifier('github.com', 'secret-id')
-  #   identifier = vault.get_identifier('github.com')
-  #   # => 'secret-id'
+  # @note We use YAML here because it's human-readable and standard in the Ruby
+  #   ecosystem, allowing power users to manually curate their identifier list.
   class Vault
     # Path to the vault file in user's home directory
     VAULT_PATH = File.expand_path('~/.passgenx/vault.yml').freeze
@@ -72,11 +71,19 @@ module Passgenx
 
     private
 
+    # Load the vault from disk with defensive error handling.
+    #
+    # If the vault file is corrupted or contains invalid YAML, we gracefully
+    # return nil rather than crashing. This allows the application to continue
+    # with an empty vault, which is a better UX than a hard failure.
+    #
+    # @return [Hash, nil] The loaded vault hash or nil if file doesn't exist or is corrupted
     def load_vault
       return unless File.exist?(VAULT_PATH)
 
       YAML.load_file(VAULT_PATH)
     rescue StandardError
+      # Swallow errors from corrupted YAML files - we'll start fresh
       nil
     end
 

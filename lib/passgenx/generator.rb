@@ -3,25 +3,14 @@
 require 'digest'
 
 module Passgenx
-  # Deterministic password generator
+  # High-integrity deterministic password generation.
   #
-  # This class implements deterministic password generation based on a
-  # combination of domain, master password, and an optional identifier.
-  # The same inputs will always yield the same password, ensuring predictability
-  # without storing any generated values.
+  # The core philosophy here is "State is the Enemy." By treating password generation
+  # as a reproducible mathematical transformation of inputs, we eliminate the need
+  # for centralized storage.
   #
-  # @example Generate a password
-  #   generator = Passgenx::Generator.new(
-  #     domain: 'github.com',
-  #     master_password: 'MySecret123!',
-  #     identifier: 'default'
-  #   )
-  #   password = generator.generate(
-  #     length: 20,
-  #     case_type: 'both',
-  #     include_symbols: true,
-  #     include_digits: true
-  #   )
+  # This class handles the building of characters sets and the seeded random distribution
+  # used to select characters for the final password.
   class Generator
     # Available symbols for password generation
     SYMBOLS = %w[
@@ -75,12 +64,20 @@ module Passgenx
       chars
     end
 
-    # Generates a deterministic seed from the domain, password, and identifier
+    # Generates a deterministic seed from the domain, password, and identifier.
     #
-    # @return [Random] A seeded random number generator for deterministic output
+    # We use SHA256 to collapse the entropy of the inputs into a fixed-width seed.
+    # This ensures that even small changes in the domain or identifier result in
+    # completely different passwords (the avalanche effect).
+    #
+    # @return [Random] A seeded random number generator instance.
     def seeded_rng
+      # Note: We use a pipe delimiter to prevent collision between (domain: 'a', password: 'bc')
+      # and (domain: 'ab', password: 'c').
       seed_input = "#{@domain}|#{@master_password}|#{@identifier}"
       seed = Digest::SHA256.hexdigest(seed_input).to_i(16)
+      
+      # Ruby's Random class is Mersenne Twister-based and deterministic for a given seed.
       Random.new(seed)
     end
   end

@@ -1,9 +1,13 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# PassgenX CLI
-# A deterministic password generator built with Ruby 3.x
-
+# Thin entry point for the PassgenX CLI.
+#
+# We keep this file minimal to ensure that the bulk of our logic remains testable
+# within the RSpec suite. By delegating immediately to Passgenx::CLI, we can
+# exercise the entire application lifecycle in memory.
+#
+# We use `bundler/setup` to ensure the environment is locked to our Gemfile versions.
 require 'bundler/setup'
 require_relative '../lib/passgenx/cli'
 
