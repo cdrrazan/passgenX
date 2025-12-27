@@ -36,17 +36,22 @@ dependency on password managers.
 
 ## 🔧 Installation
 
-Add this line to your application's Gemfile:
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/cdrrazan/passgenX.git
+   cd passgenX
+   ```
 
-```ruby
-  gem 'passgenx'
-```
+2. Install dependencies:
+   ```bash
+   bundle install
+   ```
 
-Or install it directly:
-
-```bash
-    gem install passgenx
-```
+3. (Optional) Symlink the executable to your path:
+   ```bash
+   chmod +x bin/passgenx
+   ln -s "$(pwd)/bin/passgenx" /usr/local/bin/passgenx
+   ```
 
 ---
 
@@ -55,7 +60,7 @@ Or install it directly:
 ### Generate a password interactively
 
 ```bash
-  passgenx
+  bin/passgenx
 ```
 
 **Prompts:**
@@ -70,7 +75,7 @@ Or install it directly:
 ### Setup identifier in vault
 
 ```bash
-  passgenx setup
+  bin/passgenx setup
 ```
 
 Stores a securely generated identifier for the given domain in
@@ -147,14 +152,7 @@ Clone and run locally:
 git clone https://github.com/cdrrazan/passgenX.git
 cd passgenX
 bundle install
-ruby bin/passgenx
-```
-
-Build the gem:
-
-```bash
-gem build passgenx.gemspec
-gem install ./passgenx-0.1.0.gem
+bin/passgenx
 ```
 
 ---

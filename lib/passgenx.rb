@@ -23,6 +23,7 @@
 # @see Passgenx::Vault
 require_relative 'passgenx/generator'
 require_relative 'passgenx/vault'
+require_relative 'passgenx/version'
 
 module Passgenx
 end

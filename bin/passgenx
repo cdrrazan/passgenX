@@ -6,6 +6,7 @@
 # This CLI offers both interactive and scripted modes for generating strong,
 # reproducible passwords based on a domain, master password, and identifier.
 
+require 'bundler/setup'
 require 'io/console'
 require 'optparse'
 require 'colorize'
@@ -41,6 +42,11 @@ OptionParser.new do |opts|
   opts.on('--no-digits', 'Exclude digits') { options[:include_digits] = false }
 
   opts.on('--copy', 'Copy password to clipboard') { options[:copy] = true }
+
+  opts.on('-v', '--version', 'Show version') do
+    puts "PassgenX v#{Passgenx::VERSION}"
+    exit
+  end
 
   opts.on('-h', '--help', 'Display this help message') do
     puts opts

@@ -1,2 +1,18 @@
-.idea
+# IDEs
+.idea/
+.vscode/
+
+# OS files
 .DS_Store
+
+# Ruby/Bundler
+.bundle/
+vendor/bundle
+Gemfile.lock
+
+# RSpec
+.rspec_status
+
+# Gem build (leftovers if any)
+*.gem
+pkg/
